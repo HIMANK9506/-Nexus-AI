@@ -65,13 +65,19 @@
 </head>
 <body class="bg-pane-main text-gray-200 font-sans h-screen w-screen overflow-hidden flex antialiased">
 
-    <aside class="w-64 bg-pane-side border-r border-pane-border flex flex-col flex-shrink-0 z-10 transition-all duration-300">
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <aside id="sidebar" class="w-64 bg-pane-side border-r border-pane-border flex flex-col flex-shrink-0 z-50 transition-transform duration-300 absolute md:relative h-full -translate-x-full md:translate-x-0">
         
         <!-- Top Section: Header & New Chat -->
         <div class="p-4">
-            <div class="flex items-center gap-2 text-gray-100 mb-6 px-2">
-                <i class="fa-solid fa-layer-group text-blue-500"></i>
-                <span class="font-semibold text-sm tracking-wide">Nexus AI</span>
+            <div class="flex items-center justify-between text-gray-100 mb-6 px-2">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-blue-500"></i>
+                    <span class="font-semibold text-sm tracking-wide">Nexus AI</span>
+                </div>
+                <button id="btn-close-menu" class="md:hidden text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <button id="btn-new-chat" class="w-full flex items-center justify-between bg-pane-input hover:bg-pane-hover text-gray-200 px-3 py-2.5 rounded-lg transition-colors text-sm border border-transparent hover:border-gray-700">
@@ -123,11 +129,12 @@
         </div>
     </aside>
 
-    <main class="flex-1 bg-pane-main flex flex-col relative h-full">
+    <main class="flex-1 bg-pane-main flex flex-col relative h-full w-full">
         <!-- Optional Top Bar for Model Selection -->
-        <header class="h-14 flex items-center justify-between px-6 shrink-0">
-            <div></div> <!-- Spacer -->
-            <button class="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 px-3 py-1.5 rounded-md hover:bg-pane-input transition-colors">
+        <header class="h-14 flex items-center justify-between px-4 md:px-6 shrink-0">
+            <button id="btn-menu" class="md:hidden text-gray-400 hover:text-white"><i class="fa-solid fa-bars"></i></button>
+            <div class="hidden md:block"></div> <!-- Spacer -->
+            <button class="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 px-3 py-1.5 rounded-md hover:bg-pane-input transition-colors mx-auto md:mx-0">
                 <span class="font-medium text-gray-300">Hack AI (AppSec)</span>
                 <i class="fa-solid fa-chevron-down text-xs"></i>
             </button>
@@ -464,6 +471,21 @@
     document.getElementById('btn-settings')?.addEventListener('click', () => {
         alert("Nexus AI Settings\n\nCurrent Model: Hack AI (AppSec)\nMode: Automated Vulnerability Patching\nHindsight Memory: Active\n\nAll systems are fully functional!");
     });
+
+    // Mobile Sidebar Toggle
+    const sidebar = document.getElementById('sidebar');
+    const mobileOverlay = document.getElementById('mobile-overlay');
+    const btnMenu = document.getElementById('btn-menu');
+    const btnCloseMenu = document.getElementById('btn-close-menu');
+
+    function toggleMenu() {
+        sidebar.classList.toggle('-translate-x-full');
+        mobileOverlay.classList.toggle('hidden');
+    }
+
+    btnMenu?.addEventListener('click', toggleMenu);
+    btnCloseMenu?.addEventListener('click', toggleMenu);
+    mobileOverlay?.addEventListener('click', toggleMenu);
 
     // Init
     loadSessions();

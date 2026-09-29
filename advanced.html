@@ -53,10 +53,10 @@
     </header>
 
     <!-- Main Workspace -->
-    <main class="flex-1 flex overflow-hidden">
+    <main class="flex-1 flex overflow-hidden w-full">
         
         <!-- Left Sidebar -->
-        <aside class="w-64 border-r border-nexus-border glass-panel flex flex-col h-full shrink-0">
+        <aside class="w-64 border-r border-nexus-border glass-panel hidden lg:flex flex-col h-full shrink-0">
             <div class="p-4 flex flex-col gap-4 h-full overflow-y-auto">
                 <button id="btn-new-chat" class="w-full bg-nexus-border hover:bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 flex items-center justify-center gap-2 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -122,7 +122,7 @@
         </section>
 
         <!-- Right Sidebar -->
-        <aside class="w-80 border-l border-nexus-border glass-panel flex flex-col h-full shrink-0 p-4 gap-4 overflow-y-auto">
+        <aside class="w-80 border-l border-nexus-border glass-panel hidden lg:flex flex-col h-full shrink-0 p-4 gap-4 overflow-y-auto">
             
             <!-- Latest Code Panel -->
             <div class="border border-nexus-border rounded-lg bg-nexus-bg flex flex-col min-h-[250px]">
