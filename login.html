@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus AI — Sign in</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0b0d12; }
+  .glass { background: #14171f; border: 1px solid #23262f; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center font-sans text-gray-200">
+
+  <div class="w-full max-w-sm glass rounded-2xl p-8 shadow-xl">
+    <div class="flex items-center gap-2 mb-6">
+      <div class="w-7 h-7 rounded bg-indigo-500"></div>
+      <span class="text-lg font-semibold text-white">Nexus AI</span>
+    </div>
+
+    <div class="flex mb-6 rounded-lg bg-[#1b1e27] p-1 text-sm">
+      <button id="tabLogin" class="flex-1 py-1.5 rounded-md bg-indigo-600 text-white transition">Sign in</button>
+      <button id="tabRegister" class="flex-1 py-1.5 rounded-md text-gray-400 transition">Create account</button>
+    </div>
+
+    <div id="errorBox" class="hidden mb-4 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"></div>
+
+    <form id="authForm" class="space-y-4">
+      <div id="nameField" class="hidden">
+        <label class="block text-xs text-gray-400 mb-1">Name</label>
+        <input type="text" id="name" autocomplete="name"
+          class="w-full rounded-lg bg-[#0f1117] border border-[#2a2d38] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Email</label>
+        <input type="email" id="email" required autocomplete="email"
+          class="w-full rounded-lg bg-[#0f1117] border border-[#2a2d38] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-400 mb-1">Password</label>
+        <input type="password" id="password" required minlength="8" autocomplete="current-password"
+          class="w-full rounded-lg bg-[#0f1117] border border-[#2a2d38] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        <p class="mt-1 text-[11px] text-gray-500">At least 8 characters.</p>
+      </div>
+
+      <button type="submit" id="submitBtn"
+        class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 rounded-lg transition">
+        Sign in
+      </button>
+    </form>
+  </div>
+
+<script>
+(function () {
+  const API_BASE = ""; // same-origin; set to "https://your-app.onrender.com" if serving login.html separately
+  const tabLogin = document.getElementById("tabLogin");
+  const tabRegister = document.getElementById("tabRegister");
+  const nameField = document.getElementById("nameField");
+  const form = document.getElementById("authForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const errorBox = document.getElementById("errorBox");
+
+  let mode = "login"; // "login" | "register"
+
+  function setMode(next) {
+    mode = next;
+    const isRegister = mode === "register";
+    nameField.classList.toggle("hidden", !isRegister);
+    submitBtn.textContent = isRegister ? "Create account" : "Sign in";
+    tabLogin.classList.toggle("bg-indigo-600", !isRegister);
+    tabLogin.classList.toggle("text-white", !isRegister);
+    tabLogin.classList.toggle("text-gray-400", isRegister);
+    tabRegister.classList.toggle("bg-indigo-600", isRegister);
+    tabRegister.classList.toggle("text-white", isRegister);
+    tabRegister.classList.toggle("text-gray-400", !isRegister);
+    hideError();
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.remove("hidden");
+  }
+  function hideError() {
+    errorBox.classList.add("hidden");
+  }
+
+  tabLogin.addEventListener("click", () => setMode("login"));
+  tabRegister.addEventListener("click", () => setMode("register"));
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const name = document.getElementById("name").value.trim();
+
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = mode === "register" ? "Creating…" : "Signing in…";
+
+    try {
+      const endpoint = mode === "register" ? "/auth/register" : "/auth/login";
+      const body = mode === "register" ? { email, password, name } : { email, password };
+
+      const res = await fetch(API_BASE + endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // required so the HttpOnly cookie is sent/stored
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // Bug source: swallowing the real error and showing a generic message
+        // for everything. Distinguish validation (422) from auth (401/409).
+        const msg = Array.isArray(data.detail)
+          ? data.detail.map((d) => d.msg).join(", ")
+          : data.detail || "Something went wrong. Please try again.";
+        showError(msg);
+        return;
+      }
+
+      // Cookie is already set by the server response. Redirect into the app.
+      window.location.href = "/";
+    } catch (err) {
+      showError("Network error — is the server running?");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+})();
+</script>
+</body>
+</html>
