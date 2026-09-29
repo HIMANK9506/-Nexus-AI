@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Interface</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Inter for UI text, Playfair Display for the elegant greeting -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+    
+    <!-- Load FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+                    },
+                    colors: {
+                        pane: {
+                            side: '#171717',
+                            main: '#111111',
+                            input: '#212121',
+                            hover: '#2f2f2f',
+                            border: '#2a2a2a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom subtle scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+        
+        /* Remove input outline and default styling */
+        input:focus, textarea:focus {
+            outline: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body class="bg-pane-main text-gray-200 font-sans h-screen w-screen overflow-hidden flex antialiased">
+
+    <aside class="w-64 bg-pane-side border-r border-pane-border flex flex-col flex-shrink-0 z-10 transition-all duration-300">
+        
+        <!-- Top Section: Header & New Chat -->
+        <div class="p-4">
+            <div class="flex items-center gap-2 text-gray-100 mb-6 px-2">
+                <i class="fa-solid fa-layer-group text-blue-500"></i>
+                <span class="font-semibold text-sm tracking-wide">Nexus AI</span>
+            </div>
+            
+            <button id="btn-new-chat" class="w-full flex items-center justify-between bg-pane-input hover:bg-pane-hover text-gray-200 px-3 py-2.5 rounded-lg transition-colors text-sm border border-transparent hover:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-gray-400"></i>
+                    <span>New chat</span>
+                </div>
+                <i class="fa-solid fa-plus text-gray-400 text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Middle Section: Recents -->
+        <div id="recents-container" class="flex-1 overflow-y-auto px-2 space-y-1 mt-2">
+            <div class="px-3 pb-2 pt-1 text-xs font-semibold text-gray-500">Recents</div>
+        </div>
+
+        <!-- Upload Knowledge Section -->
+        <div class="p-4 border-t border-pane-border/50">
+            <div class="text-xs font-semibold text-gray-500 mb-3 px-1">Upload Knowledge</div>
+            <div class="flex flex-wrap gap-2 px-1">
+                <button class="btn-upload flex items-center gap-1.5 bg-pane-input hover:bg-pane-hover px-2.5 py-1.5 rounded-md text-xs text-gray-300 transition-colors border border-gray-800">
+                    <i class="fa-regular fa-file-lines text-blue-400"></i> .TXT
+                </button>
+                <button class="btn-upload flex items-center gap-1.5 bg-pane-input hover:bg-pane-hover px-2.5 py-1.5 rounded-md text-xs text-gray-300 transition-colors border border-gray-800">
+                    <i class="fa-regular fa-file-pdf text-red-400"></i> .PDF
+                </button>
+                <button class="btn-upload flex items-center gap-1.5 bg-pane-input hover:bg-pane-hover px-2.5 py-1.5 rounded-md text-xs text-gray-300 transition-colors border border-gray-800">
+                    <i class="fa-brands fa-markdown text-purple-400"></i> .MD
+                </button>
+                <input type="file" id="file-upload" class="hidden" accept=".txt,.pdf,.md,.csv">
+            </div>
+        </div>
+
+        <!-- Bottom Section: User Profile -->
+        <div class="p-3 border-t border-pane-border flex items-center justify-between hover:bg-pane-input cursor-pointer transition-colors m-2 rounded-lg">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+                    A
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-sm font-medium text-gray-200">Admin</span>
+                    <span class="text-[10px] text-gray-500">Pro Plan</span>
+                </div>
+            </div>
+            <i id="btn-settings" class="fa-solid fa-gear text-gray-500 text-sm hover:text-gray-300"></i>
+        </div>
+        <div class="p-2 text-center mb-2">
+            <a href="/advanced" class="text-xs bg-indigo-600/30 text-indigo-400 border border-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-600/50 transition-colors w-full inline-block">Switch to Advanced UI</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 bg-pane-main flex flex-col relative h-full">
+        <!-- Optional Top Bar for Model Selection -->
+        <header class="h-14 flex items-center justify-between px-6 shrink-0">
+            <div></div> <!-- Spacer -->
+            <button class="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 px-3 py-1.5 rounded-md hover:bg-pane-input transition-colors">
+                <span class="font-medium text-gray-300">Hack AI (AppSec)</span>
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <button id="btn-theme" class="text-gray-500 hover:text-gray-300"><i class="fa-solid fa-circle-half-stroke"></i></button>
+            </div>
+        </header>
+
+        <!-- Centered Interaction Area -->
+        <div class="flex-1 flex flex-col w-full max-w-3xl mx-auto px-4 pb-6 pt-6 min-h-0">
+            
+            <div id="chat-history" class="flex-1 w-full overflow-y-auto mb-4 flex flex-col gap-4 min-h-0 pr-2"></div>
+
+
+            <!-- Input Bar -->
+            <div class="w-full relative group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-gray-800 to-gray-700 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                <div class="relative bg-pane-input border border-gray-700/50 rounded-2xl flex items-end p-2.5 shadow-2xl focus-within:border-gray-500/50 focus-within:bg-[#252525] transition-all">
+                    
+                    <button class="p-2.5 text-gray-400 hover:text-gray-200 hover:bg-pane-hover rounded-full flex-shrink-0 transition-colors h-10 w-10 flex items-center justify-center">
+                        <i class="fa-solid fa-plus text-lg"></i>
+                    </button>
+                    
+                    <textarea id="chat-input" 
+                        class="flex-1 bg-transparent border-none text-gray-100 text-[15px] resize-none max-h-48 min-h-[40px] px-2 py-2.5 leading-relaxed placeholder-gray-500"
+                        placeholder="Ask anything..."
+                        rows="1"
+                        style="overflow-y: hidden;"
+                    ></textarea>
+                    
+                    <div class="flex items-center gap-1 shrink-0 p-1">
+                        <button class="p-2 text-gray-400 hover:text-gray-200 hover:bg-pane-hover rounded-full transition-colors h-9 w-9 flex items-center justify-center">
+                            <i class="fa-solid fa-microphone text-[15px]"></i>
+                        </button>
+                        <button class="p-2 bg-white text-black hover:bg-gray-200 rounded-full transition-colors h-9 w-9 flex items-center justify-center ml-1">
+                            <i class="fa-solid fa-arrow-up text-[15px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="flex flex-wrap justify-center gap-3 mt-8 text-sm">
+                <button id="btn-image" class="px-4 py-2 bg-pane-side border border-pane-border rounded-full text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors flex items-center gap-2">
+                    <i class="fa-regular fa-image"></i> Create an image
+                </button>
+                <button id="btn-code" class="px-4 py-2 bg-pane-side border border-pane-border rounded-full text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-code"></i> Write some code
+                </button>
+                <button id="btn-search" class="px-4 py-2 bg-pane-side border border-pane-border rounded-full text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-globe"></i> Search the web
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <aside class="w-96 lg:w-[450px] 2xl:w-[500px] bg-pane-side border-l border-pane-border flex flex-col flex-shrink-0 z-10 overflow-y-auto">
+        <div class="p-5 space-y-8">
+            
+            <!-- Latest Generated Code Section -->
+            <section>
+                <div class="flex items-center gap-2 text-gray-200 font-semibold mb-3">
+                    <i class="fa-regular fa-file-code text-orange-400"></i>
+                    <h2>Latest Generated Code</h2>
+                </div>
+                
+                <div class="bg-[#0a0a0a] border border-pane-border rounded-lg overflow-hidden group">
+                    <div class="bg-[#1e1e1e] px-3 py-1.5 flex items-center justify-between border-b border-pane-border/50">
+                        <span class="text-xs text-gray-400 font-mono">script.py</span>
+                        <div class="flex gap-2">
+                            <button id="btn-copy" class="text-gray-500 hover:text-gray-300 transition-colors"><i class="fa-regular fa-copy text-xs"></i></button>
+                            <button id="btn-download" class="text-gray-500 hover:text-gray-300 transition-colors"><i class="fa-solid fa-download text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="p-3 text-sm font-mono text-gray-500 italic opacity-70">
+                        <span id="code-output">No code generated yet. Ask the AI to write some code to see it appear here!</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Local Terminal Scratchpad Section -->
+            <section>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2 text-gray-200 font-semibold">
+                        <i class="fa-solid fa-terminal text-blue-400"></i>
+                        <h2>Local Terminal Scratchpad</h2>
+                    </div>
+                    <i class="fa-solid fa-ellipsis-vertical text-gray-500 cursor-pointer hover:text-gray-300"></i>
+                </div>
+                
+                <div class="space-y-3">
+                    <!-- Command Input -->
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1.5">Execute local command (e.g., dir, python --version):</label>
+                        <div class="relative flex items-center">
+                            <i class="fa-solid fa-angle-right absolute left-3 text-gray-500 text-xs"></i>
+                            <input type="text" 
+                                class="w-full bg-pane-input border border-pane-border rounded-md pl-7 pr-3 py-2 text-sm text-gray-200 font-mono focus:border-gray-500 transition-colors"
+                                id="term-input" placeholder="Enter command...">
+                        </div>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1.5">Console Output:</label>
+                        <div class="bg-[#0a0a0a] border border-pane-border rounded-md p-3 h-80 overflow-y-auto font-mono text-sm relative group whitespace-pre-wrap">
+                            <div class="text-gray-400 italic"><span id="term-output">Output will appear here...</span></div>
+                            <div class="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button id="btn-term-clear" class="bg-pane-input border border-pane-border p-1.5 rounded text-gray-400 hover:text-gray-200"><i class="fa-solid fa-eraser text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+        </div>
+    </aside>
+
+
+<script>
+    const chatInput = document.getElementById('chat-input');
+    const chatHistory = document.getElementById('chat-history');
+    const greeting = document.querySelector('.mb-8.flex.items-center.gap-3');
+    const suggestions = document.querySelector('.flex.flex-wrap.justify-center.gap-3.mt-8.text-sm');
+    const recentsContainer = document.getElementById('recents-container');
+
+    // Load Sessions on Boot
+    async function loadSessions() {
+        try {
+            const res = await fetch('/sessions');
+            const data = await res.json();
+            
+            // Clear current list
+            if(recentsContainer) recentsContainer.innerHTML = '<div class="px-3 pb-2 pt-1 text-xs font-semibold text-gray-500">Recents</div>';
+            
+            // Populate
+            data.sessions.forEach(session => {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = `block px-3 py-2 rounded-lg text-sm truncate transition-colors ${session.id === data.current ? 'bg-pane-hover text-white' : 'hover:bg-pane-input text-gray-300'}`;
+                a.innerText = session.title;
+                a.onclick = (e) => { e.preventDefault(); switchSession(session.id); };
+                if(recentsContainer) recentsContainer.appendChild(a);
+            });
+        } catch (e) { console.error('Failed to load sessions', e); }
+    }
+    
+    // Switch to a session
+    async function switchSession(id) {
+        try {
+            const res = await fetch('/sessions/load', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({session_id: id})
+            });
+            const data = await res.json();
+            
+            // Clear UI
+            chatHistory.innerHTML = '';
+            document.getElementById('code-output').innerHTML = '<div class="p-3 text-sm font-mono text-gray-500 italic opacity-70">No code generated yet. Ask the AI to write some code to see it appear here!</div>';
+            
+            if (data.messages && data.messages.length > 0) {
+                if(greeting) greeting.style.display = 'none';
+                if(suggestions) suggestions.style.display = 'none';
+                data.messages.forEach(m => {
+                    addMessage(m.role, m.text);
+                    if (m.code) {
+                        document.getElementById('code-output').innerHTML = `<pre class="p-3 text-sm font-mono overflow-auto max-h-[500px] text-gray-200"><code>${m.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+                    }
+                });
+            } else {
+                if(greeting) greeting.style.display = 'flex';
+                if(suggestions) suggestions.style.display = 'flex';
+            }
+            loadSessions(); // refresh active state
+        } catch (e) { console.error('Switch session failed', e); }
+    }
+
+    // New Chat
+    document.getElementById('btn-new-chat')?.addEventListener('click', async () => {
+        try {
+            await fetch('/sessions/new', { method: 'POST' });
+            chatHistory.innerHTML = '';
+            document.getElementById('code-output').innerHTML = '<div class="p-3 text-sm font-mono text-gray-500 italic opacity-70">No code generated yet. Ask the AI to write some code to see it appear here!</div>';
+            document.getElementById('term-output').innerText = 'Output will appear here...';
+            
+            if(greeting) greeting.style.display = 'flex';
+            if(suggestions) suggestions.style.display = 'flex';
+            
+            loadSessions();
+        } catch (e) { console.error('New chat error:', e); }
+    });
+
+    async function submitChat(text) {
+        addMessage('user', text);
+        try {
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({prompt: text})
+            });
+            const data = await res.json();
+            addMessage('assistant', data.reply);
+            if (data.code) {
+                document.getElementById('code-output').innerHTML = `<pre class="p-3 text-sm font-mono overflow-auto max-h-[500px] text-gray-200"><code>${data.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+            }
+            
+            if (data.username) {
+                const greetingTitle = document.querySelector('.mb-8.flex.items-center.gap-3 h1');
+                if (greetingTitle) greetingTitle.innerText = `Evening, ${data.username}`;
+                
+                const profileName = document.querySelector('.flex.flex-col span.text-sm.font-medium.text-gray-200');
+                if (profileName) profileName.innerText = data.username;
+                
+                const profileInitial = document.querySelector('.w-8.h-8.rounded-full');
+                if (profileInitial) profileInitial.innerText = data.username.charAt(0).toUpperCase();
+            }
+            loadSessions(); // Update titles
+        } catch (err) {
+            addMessage('assistant', 'Error calling backend.');
+        }
+    }
+
+    document.getElementById('btn-image')?.addEventListener('click', () => { submitChat("Can you write a Python script using the diffusers library to generate an AI image locally?"); });
+    document.getElementById('btn-code')?.addEventListener('click', () => { submitChat("Write a clean, well-documented Python script that creates a basic REST API."); });
+    document.getElementById('btn-search')?.addEventListener('click', () => { submitChat("Can you write a Python script to search the web and scrape the top results?"); });
+    
+    function addMessage(role, text) {
+        if(greeting) greeting.style.display = 'none';
+        if(suggestions) suggestions.style.display = 'none';
+        
+        const div = document.createElement('div');
+        div.className = role === 'user' ? 'self-end bg-[#2f2f2f] text-white px-4 py-3 rounded-2xl max-w-[80%]' : 'self-start bg-transparent text-gray-200 px-2 py-3 w-full';
+        div.innerHTML = text.replace(/\n/g, '<br>');
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    chatInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+            await submitChat(text);
+        }
+    });
+
+    const termInput = document.getElementById('term-input');
+    const termOutput = document.getElementById('term-output');
+    termInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            const cmd = termInput.value.trim();
+            if (!cmd) return;
+            termInput.value = '';
+            const reqLine = `\n> ${cmd}\n`;
+            termOutput.innerText += reqLine;
+            try {
+                const res = await fetch('/terminal', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({command: cmd})
+                });
+                const data = await res.json();
+                termOutput.innerText += data.output;
+            } catch (err) {
+                termOutput.innerText += 'Error executing command.';
+            }
+            termOutput.parentElement.scrollTop = termOutput.parentElement.scrollHeight;
+        }
+    });
+
+    // File Uploads
+    const fileUploadInput = document.getElementById('file-upload');
+    document.querySelectorAll('.btn-upload').forEach(btn => {
+        btn.addEventListener('click', () => fileUploadInput.click());
+    });
+    fileUploadInput?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        addMessage('user', `*Uploaded file: ${file.name}*`);
+        try {
+            const res = await fetch('/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            addMessage('assistant', data.status);
+        } catch (err) { addMessage('assistant', 'Error uploading file.'); }
+        fileUploadInput.value = '';
+    });
+
+    // Copy Code
+    document.getElementById('btn-copy')?.addEventListener('click', () => {
+        const codeElement = document.querySelector('#code-output code');
+        if (codeElement) {
+            navigator.clipboard.writeText(codeElement.innerText);
+            alert('Code copied to clipboard!');
+        }
+    });
+
+    // Download Code
+    document.getElementById('btn-download')?.addEventListener('click', () => {
+        const codeElement = document.querySelector('#code-output code');
+        if (codeElement) {
+            const blob = new Blob([codeElement.innerText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'script.py';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    });
+
+    // Clear Terminal
+    document.getElementById('btn-term-clear')?.addEventListener('click', () => {
+        document.getElementById('term-output').innerText = 'Output will appear here...';
+    });
+
+    // Theme Toggle (Simple Invert)
+    document.getElementById('btn-theme')?.addEventListener('click', () => {
+        if (document.body.style.filter === 'invert(1) hue-rotate(180deg)') {
+            document.body.style.filter = '';
+            document.body.style.backgroundColor = '';
+        } else {
+            document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+            document.body.style.backgroundColor = '#eaeaea';
+        }
+    });
+
+    // Settings Modal (Mock)
+    document.getElementById('btn-settings')?.addEventListener('click', () => {
+        alert("Nexus AI Settings\n\nCurrent Model: Hack AI (AppSec)\nMode: Automated Vulnerability Patching\nHindsight Memory: Active\n\nAll systems are fully functional!");
+    });
+
+    // Init
+    loadSessions();
+
+</script>
+
+</body>
+</html>

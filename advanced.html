@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus AI - Advanced Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "nexus-bg": "#0f0f11",
+                        "nexus-panel": "#1a1a1c",
+                        "nexus-border": "#2d2d30",
+                        "nexus-accent": "#2563eb",
+                        "nexus-text": "#e2e8f0",
+                        "nexus-muted": "#94a3b8"
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f0f11; color: #e2e8f0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .glass-panel { background: rgba(26, 26, 28, 0.7); backdrop-filter: blur(10px); border: 1px solid #2d2d30; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="h-14 border-b border-nexus-border glass-panel flex items-center justify-between px-4 shrink-0 z-10">
+        <div class="flex items-center gap-6">
+            <div class="font-bold text-lg tracking-wide flex items-center gap-2">
+                <svg class="w-6 h-6 text-nexus-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Nexus AI
+            </div>
+            <nav class="hidden md:flex gap-4 text-sm font-medium text-nexus-muted">
+                <a href="#" class="text-white">Playground</a>
+                <a href="#" class="hover:text-white transition-colors">Use Cases</a>
+                <a href="#" class="hover:text-white transition-colors">Reports & Settings</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="/" class="text-xs bg-red-900/30 text-red-400 border border-red-800 px-3 py-1.5 rounded hover:bg-red-900/50 transition-colors">Revert to Simple UI</a>
+            <div class="w-8 h-8 rounded-full bg-nexus-accent flex items-center justify-center text-sm font-bold">A</div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar -->
+        <aside class="w-64 border-r border-nexus-border glass-panel flex flex-col h-full shrink-0">
+            <div class="p-4 flex flex-col gap-4 h-full overflow-y-auto">
+                <button id="btn-new-chat" class="w-full bg-nexus-border hover:bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 flex items-center justify-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    New Chat
+                </button>
+                
+                <div class="mt-4">
+                    <label class="text-xs font-semibold text-nexus-muted uppercase tracking-wider mb-2 block">Model Selector</label>
+                    <select class="w-full bg-nexus-bg border border-nexus-border rounded px-3 py-2 text-sm focus:outline-none focus:border-nexus-accent">
+                        <option>Nexus Auditing Model 1.5</option>
+                        <option>Nexus Fast (Groq)</option>
+                    </select>
+                </div>
+
+                <div class="mt-4 flex-1">
+                    <label class="text-xs font-semibold text-nexus-muted uppercase tracking-wider mb-2 block">Recents</label>
+                    <div id="session-list" class="flex flex-col gap-1">
+                        <!-- Sessions load here -->
+                    </div>
+                </div>
+
+                <!-- Upload Dropzone -->
+                <div class="mt-auto pt-4 border-t border-nexus-border">
+                    <label class="text-xs font-semibold text-nexus-muted uppercase tracking-wider mb-2 block">Upload Knowledge</label>
+                    <div class="border border-dashed border-nexus-border rounded-lg p-4 flex flex-col items-center justify-center text-center bg-nexus-bg/50 hover:bg-nexus-border/50 cursor-pointer transition-colors" onclick="document.getElementById('file-input').click()">
+                        <svg class="w-6 h-6 text-nexus-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <span class="text-sm font-medium">Upload dropzone</span>
+                        <span class="text-xs text-nexus-muted mt-1">.TXT, .PDF, .MD</span>
+                    </div>
+                    <input type="file" id="file-input" class="hidden" accept=".txt,.pdf,.md" onchange="uploadFile(event)">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Chat Area -->
+        <section class="flex-1 flex flex-col relative h-full bg-nexus-bg">
+            <!-- Chat Header -->
+            <div class="h-12 border-b border-nexus-border flex items-center justify-center bg-nexus-panel/50 backdrop-blur-sm absolute top-0 w-full z-10">
+                <span class="text-sm font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    AppSec (Security Audit v)
+                </span>
+            </div>
+
+            <!-- Messages -->
+            <div id="chat-history" class="flex-1 overflow-y-auto p-6 pt-16 pb-24 space-y-6">
+                <!-- Messages go here -->
+                <div class="text-center text-nexus-muted mt-10">
+                    <h2 class="text-2xl font-bold text-white mb-2">Nexus AI Hindsight</h2>
+                    <p>Ask a question or upload vulnerability reports to begin.</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="absolute bottom-6 w-full px-8 flex justify-center">
+                <div class="max-w-3xl w-full relative">
+                    <textarea id="chat-input" rows="1" class="w-full bg-nexus-panel border border-nexus-border rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:border-nexus-accent resize-none shadow-lg" placeholder="Ask anything..."></textarea>
+                    <button id="btn-send" class="absolute right-3 top-3 text-nexus-muted hover:text-white bg-nexus-border rounded p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Sidebar -->
+        <aside class="w-80 border-l border-nexus-border glass-panel flex flex-col h-full shrink-0 p-4 gap-4 overflow-y-auto">
+            
+            <!-- Latest Code Panel -->
+            <div class="border border-nexus-border rounded-lg bg-nexus-bg flex flex-col min-h-[250px]">
+                <div class="h-10 border-b border-nexus-border flex items-center px-3 gap-2 bg-nexus-panel/50 rounded-t-lg">
+                    <svg class="w-4 h-4 text-nexus-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    <span class="text-sm font-semibold">Latest Generated Code</span>
+                </div>
+                <div id="code-output" class="p-3 text-xs font-mono text-nexus-muted overflow-auto flex-1">
+                    No code generated yet.
+                </div>
+            </div>
+
+            <!-- Terminal Scratchpad -->
+            <div class="border border-nexus-border rounded-lg bg-nexus-bg flex flex-col flex-1 min-h-[250px]">
+                <div class="h-10 border-b border-nexus-border flex items-center px-3 gap-2 bg-nexus-panel/50 rounded-t-lg">
+                    <svg class="w-4 h-4 text-nexus-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M4 17h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <span class="text-sm font-semibold">Local Terminal Scratchpad</span>
+                </div>
+                <div class="p-2 border-b border-nexus-border flex gap-2">
+                    <input type="text" id="term-input" class="w-full bg-nexus-panel border border-nexus-border rounded px-2 py-1 text-xs focus:outline-none" placeholder="Enter command...">
+                    <button id="btn-term-run" class="bg-nexus-accent text-white px-2 py-1 rounded text-xs font-semibold">Run</button>
+                </div>
+                <div id="term-output" class="p-3 text-xs font-mono text-green-400 overflow-auto flex-1">
+                    Console Output:
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <script>
+        const chatInput = document.getElementById("chat-input");
+        const chatHistory = document.getElementById("chat-history");
+        
+        async function loadSessions() {
+            try {
+                const res = await fetch("/sessions");
+                const data = await res.json();
+                const list = document.getElementById("session-list");
+                list.innerHTML = "";
+                data.sessions.forEach(s => {
+                    const btn = document.createElement("button");
+                    btn.className = `w-full text-left px-3 py-1.5 rounded text-sm truncate ${s.id === data.current ? "bg-nexus-accent/20 text-nexus-accent border border-nexus-accent/30" : "text-nexus-muted hover:bg-nexus-border/50"}`;
+                    btn.innerText = s.title;
+                    btn.onclick = () => switchSession(s.id);
+                    list.appendChild(btn);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function switchSession(id) {
+            try {
+                await fetch("/sessions/load", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({session_id: id})
+                });
+                chatHistory.innerHTML = "";
+                loadSessions();
+            } catch (e) { console.error(e); }
+        }
+
+        document.getElementById("btn-new-chat").onclick = async () => {
+            await fetch("/sessions/new", { method: "POST" });
+            chatHistory.innerHTML = "";
+            document.getElementById("code-output").innerText = "No code generated yet.";
+            loadSessions();
+        };
+
+        async function uploadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append("file", file);
+            
+            addMessage("user", `[Uploading ${file.name}...]`);
+            
+            try {
+                const res = await fetch("/upload", { method: "POST", body: formData });
+                const data = await res.json();
+                addMessage("assistant", data.status || data.output);
+            } catch (e) { addMessage("assistant", "Upload failed."); }
+        }
+
+        function addMessage(role, text) {
+            if(chatHistory.querySelector(".text-center")) { chatHistory.innerHTML = ""; }
+            const div = document.createElement("div");
+            div.className = role === "user" ? "flex justify-end" : "flex justify-start";
+            
+            const bubble = document.createElement("div");
+            bubble.className = role === "user" ? "bg-nexus-accent text-white px-4 py-2 rounded-2xl rounded-tr-sm max-w-[80%]" : "bg-nexus-panel border border-nexus-border text-nexus-text px-4 py-3 rounded-xl max-w-full font-mono text-sm shadow-lg";
+            bubble.innerHTML = text.replace(/\\n/g, "<br>");
+            
+            div.appendChild(bubble);
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        async function submitChat(text) {
+            addMessage("user", text);
+            chatInput.value = "";
+            try {
+                const res = await fetch("/chat", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({prompt: text})
+                });
+                const data = await res.json();
+                addMessage("assistant", data.reply);
+                
+                if (data.code) {
+                    document.getElementById("code-output").innerHTML = `<pre><code>${data.code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
+                }
+                loadSessions();
+            } catch (err) {
+                addMessage("assistant", "Error calling backend.");
+            }
+        }
+
+        document.getElementById("btn-send").onclick = () => {
+            if (chatInput.value.trim()) submitChat(chatInput.value.trim());
+        };
+        chatInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (chatInput.value.trim()) submitChat(chatInput.value.trim());
+            }
+        });
+
+        document.getElementById("btn-term-run").onclick = async () => {
+            const cmd = document.getElementById("term-input").value.trim();
+            if(!cmd) return;
+            const termOut = document.getElementById("term-output");
+            termOut.innerText += "\\n> " + cmd + "\\nRunning...";
+            try {
+                const res = await fetch("/terminal", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({command: cmd})
+                });
+                const data = await res.json();
+                termOut.innerText = termOut.innerText.replace("Running...", data.output);
+                termOut.scrollTop = termOut.scrollHeight;
+            } catch (e) { termOut.innerText += "\\nError."; }
+        };
+
+        loadSessions();
+    </script>
+</body>
+</html>
