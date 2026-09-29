@@ -158,9 +158,29 @@
         const chatInput = document.getElementById("chat-input");
         const chatHistory = document.getElementById("chat-history");
         
+        // --- DEVICE ISOLATION FIX ---
+        function getDeviceId() {
+            let id = localStorage.getItem('nexus_device_id');
+            if (!id) {
+                id = 'dev_' + Math.random().toString(36).substr(2, 12);
+                localStorage.setItem('nexus_device_id', id);
+            }
+            return id;
+        }
+        function getCurrentSessionId() {
+            let sid = localStorage.getItem('nexus_session_id');
+            if (!sid) {
+                sid = getDeviceId() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('nexus_session_id', sid);
+            }
+            return sid;
+        }
+        const DEVICE_ID = getDeviceId();
+        // --- END DEVICE ISOLATION FIX ---
+
         async function loadSessions() {
             try {
-                const res = await fetch("/sessions");
+                const res = await fetch(`/sessions?device_id=${DEVICE_ID}`);
                 const data = await res.json();
                 const list = document.getElementById("session-list");
                 list.innerHTML = "";
@@ -187,7 +207,8 @@
         }
 
         document.getElementById("btn-new-chat").onclick = async () => {
-            await fetch("/sessions/new", { method: "POST" });
+            const newSid = DEVICE_ID + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('nexus_session_id', newSid);
             chatHistory.innerHTML = "";
             document.getElementById("code-output").innerText = "No code generated yet.";
             loadSessions();
@@ -215,7 +236,7 @@
             
             const bubble = document.createElement("div");
             bubble.className = role === "user" ? "bg-nexus-accent text-white px-4 py-2 rounded-2xl rounded-tr-sm max-w-[80%]" : "bg-nexus-panel border border-nexus-border text-nexus-text px-4 py-3 rounded-xl max-w-full font-mono text-sm shadow-lg";
-            bubble.innerHTML = text.replace(/\\n/g, "<br>");
+            bubble.innerHTML = text.replace(/\n/g, "<br>");
             
             div.appendChild(bubble);
             chatHistory.appendChild(div);
@@ -225,11 +246,12 @@
         async function submitChat(text) {
             addMessage("user", text);
             chatInput.value = "";
+            const sessionId = getCurrentSessionId();
             try {
                 const res = await fetch("/chat", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({prompt: text})
+                    body: JSON.stringify({prompt: text, session_id: sessionId})
                 });
                 const data = await res.json();
                 addMessage("assistant", data.reply);

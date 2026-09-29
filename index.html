@@ -261,10 +261,30 @@
     const suggestions = document.querySelector('.flex.flex-wrap.justify-center.gap-3.mt-8.text-sm');
     const recentsContainer = document.getElementById('recents-container');
 
+    // --- DEVICE ISOLATION FIX ---
+    function getDeviceId() {
+        let id = localStorage.getItem('nexus_device_id');
+        if (!id) {
+            id = 'dev_' + Math.random().toString(36).substr(2, 12);
+            localStorage.setItem('nexus_device_id', id);
+        }
+        return id;
+    }
+    function getCurrentSessionId() {
+        let sid = localStorage.getItem('nexus_session_id');
+        if (!sid) {
+            sid = getDeviceId() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('nexus_session_id', sid);
+        }
+        return sid;
+    }
+    const DEVICE_ID = getDeviceId();
+    // --- END DEVICE ISOLATION FIX ---
+
     // Load Sessions on Boot
     async function loadSessions() {
         try {
-            const res = await fetch('/sessions');
+            const res = await fetch(`/sessions?device_id=${DEVICE_ID}`);
             const data = await res.json();
             
             // Clear current list
@@ -316,7 +336,8 @@
     // New Chat
     document.getElementById('btn-new-chat')?.addEventListener('click', async () => {
         try {
-            await fetch('/sessions/new', { method: 'POST' });
+            const newSid = DEVICE_ID + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('nexus_session_id', newSid);
             chatHistory.innerHTML = '';
             document.getElementById('code-output').innerHTML = '<div class="p-3 text-sm font-mono text-gray-500 italic opacity-70">No code generated yet. Ask the AI to write some code to see it appear here!</div>';
             document.getElementById('term-output').innerText = 'Output will appear here...';
@@ -330,11 +351,12 @@
 
     async function submitChat(text) {
         addMessage('user', text);
+        const sessionId = getCurrentSessionId();
         try {
             const res = await fetch('/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({prompt: text})
+                body: JSON.stringify({prompt: text, session_id: sessionId})
             });
             const data = await res.json();
             addMessage('assistant', data.reply);

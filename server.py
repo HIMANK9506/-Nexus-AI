@@ -70,6 +70,7 @@ def recall(session_id):
 # --- Models ---
 class ChatRequest(BaseModel):
     prompt: str
+    session_id: str = ""
 
 class TerminalRequest(BaseModel):
     command: str
@@ -89,22 +90,23 @@ def read_advanced():
         return HTMLResponse(content=f.read())
 
 @app.get("/sessions")
-def get_sessions():
+def get_sessions(device_id: str = ""):
     memory = _load_memory()
     sessions = []
     for sid, data in memory.items():
-        sessions.append({"id": sid, "title": data.get("title", "New Chat")})
-    return {"sessions": sessions, "current": get_current_session()}
+        if not device_id or sid.startswith(device_id):
+            sessions.append({"id": sid, "title": data.get("title", "New Chat")})
+    return {"sessions": sessions, "current": device_id}
 
 @app.post("/sessions/new")
-def new_session():
+def new_session(req: SessionRequest = None):
     new_id = str(uuid.uuid4())
-    set_current_session(new_id)
-    return {"status": "ok", "session_id": new_id}
+    device_id = req.session_id if req and req.session_id else ""
+    tagged_id = f"{device_id}_{new_id}" if device_id else new_id
+    return {"status": "ok", "session_id": tagged_id}
 
 @app.post("/sessions/load")
 def load_session(req: SessionRequest):
-    set_current_session(req.session_id)
     memory = _load_memory()
     messages = memory.get(req.session_id, {}).get("messages", [])
     # Return formatted messages for UI
@@ -119,7 +121,7 @@ def load_session(req: SessionRequest):
 @app.post("/chat")
 def chat(req: ChatRequest):
     prompt = req.prompt
-    session_id = get_current_session()
+    session_id = req.session_id if req.session_id else get_current_session()
     
     # Retain the user's message
     retain(session_id, "user", prompt)
